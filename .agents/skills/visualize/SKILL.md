@@ -5,7 +5,7 @@ description: "Add a correct, minimal visual to a lesson — a diagram or geometr
 
 # Visualize
 
-A picture earns its place only when it shows something words can't — shape, structure, direction, relationship, geometry. This skill produces ONE such picture, guarantees it is **correct** (the maker renders it and looks at it before returning), and drops it into the lesson so it renders inline in the Obsidian `md-log` file.
+A picture earns its place only when it shows something words can't — shape, structure, direction, relationship, geometry. This skill produces ONE such picture, guarantees it is **correct** (the maker renders it and looks at it before returning), and drops it into the lesson so it renders inline in the Obsidian markdown file.
 
 You are the **creative director**. You decide the exact idea and distill it to its fewest carrying elements. A **maker subagent** does the authoring, rendering, visual verification, and saving, then returns a filename. You embed that filename in your reply.
 
@@ -20,7 +20,7 @@ Do NOT visualize when prose or a single equation already carries it. A decorativ
 
 ## Choose the maker
 
-Two makers, discovered from `.pi/agents/`:
+Two makers, defined in `.agents/rules/AGENTS.md` (or simply as specific roles you pass to `invoke_subagent`):
 
 - **`mermaid-maker`** — structural/relational visuals: dependency graphs, flowcharts, sequence/state/ER/class diagrams, trees, mindmaps, timelines. This is the default and fits the dependency-graph pedagogy directly.
 - **`svg-maker`** — spatial/geometric visuals Mermaid can't lay out: exact coordinates, geometry figures, number lines, vectors, plots, custom shapes.
@@ -40,21 +40,25 @@ Keep the idea intact but trust the maker to compose; if your brief lists more th
 
 ## Invoke
 
-Dispatch the maker with the `subagent` tool:
+Dispatch the maker with the `invoke_subagent` tool:
 
-```
-subagent(agent="mermaid-maker", task="<your minimal, concrete brief>")
-```
-```
-subagent(agent="svg-maker", task="<your minimal, concrete brief>")
+```json
+{
+  "Subagents": [
+    {
+      "TypeName": "self",
+      "Role": "mermaid-maker",
+      "Prompt": "<your minimal, concrete brief> + Use `write_to_file` to write the source, run `.agents/skills/visualize/scripts/render_mermaid.js` (or render_svg.js) to generate a PNG, use `view_file` to visually verify the PNG, and copy it to `viz/viz-<slug>-<timestamp>.png` once correct."
+    }
+  ]
+}
 ```
 
-The maker owns its own purpose-built tools (`write_*`/`edit_*`/`render_*`) — it authors the source, renders it to a PNG, **looks at the PNG and iterates until it is correct and clean**, publishes it into the vault with a unique filename, and returns:
+The maker uses its tools (`write_to_file`/`replace_file_content`/`run_command`) — it authors the source, renders it to a PNG, **looks at the PNG with `view_file` and iterates until it is correct and clean**, publishes it into the vault with a unique filename, and tells you:
 
 ```
 RESULT:
 filename: viz-<slug>-<timestamp>.png
-path: <cwd>/viz/viz-<slug>-<timestamp>.png
 ```
 
 If it returns `RESULT: NONE`, it couldn't make a correct picture of the brief — simplify or rethink, or decide the visual isn't worth it. Never hand-author or fake a diagram yourself; correctness depends on the maker's render-and-inspect loop.
@@ -67,12 +71,10 @@ Put the embed directly in your teaching reply, using Obsidian's wikilink embed w
 ![[viz-<slug>-<timestamp>.png|500]]
 ```
 
-That's all. The `md-log` extension mirrors your reply text verbatim into the linked `.md`, and Obsidian resolves the embed by filename anywhere in the vault (the maker saves into the project's `viz` folder, which is inside the vault) — so it renders inline in the lesson automatically. Width `|500` is a good default; use larger for dense diagrams. Introduce the visual in a sentence, then let it carry the idea — don't narrate every element back in prose.
+That's all. The `md_log_sync.js` hook mirrors your reply text verbatim into the linked `.md`, and Obsidian resolves the embed by filename anywhere in the vault (the maker saves into the project's `viz` folder, which is inside the vault) — so it renders inline in the lesson automatically. Width `|500` is a good default; use larger for dense diagrams. Introduce the visual in a sentence, then let it carry the idea — don't narrate every element back in prose.
 
 ## Why this is reliable
 
 - The maker never returns a picture it hasn't **looked at**, so "renders fine but says something false" is caught before it reaches the learner.
 - PNG embed means **what the maker verified is pixel-identical to what the learner sees** — no re-render drift.
 - Unique filenames keep Obsidian's by-filename embed resolution unambiguous.
-
-> The makers render through the project's `visual-tools` extension (Mermaid via a bundled `@mermaid-js/mermaid-cli` + installed Chrome; SVG via `rsvg-convert`, fallback ImageMagick). You don't render anything yourself — you only brief the maker and embed the filename it returns.

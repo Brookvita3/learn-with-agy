@@ -14,5 +14,8 @@ __pycache__/
 .venv/
 
 # Runtime state
+/lesson
 .memory/
 *.log
+.agents/.state.json
+.agents/.session_state.json

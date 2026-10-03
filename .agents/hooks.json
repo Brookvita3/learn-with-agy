@@ -1,0 +1,35 @@
+{
+  "obsidian-md-log": {
+    "PreToolUse": [
+      {
+        "matcher": "ask_question",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/md_log_sync.js pre-tool",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "ask_question",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/md_log_sync.js post-tool",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "node scripts/md_log_sync.js post-invocation",
+        "timeout": 15
+      }
+    ]
+  }
+}
